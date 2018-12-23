@@ -12,12 +12,20 @@ class App:
 
         self.imgProcessedCounter = 0
         self.currentImgIndex = 0
+        self.imgPathList = []
+        self.currentfilepath = ""
 
         self.canvas_height = self.window_height - self.infoLabel_height
         self.canvas_width = self.window_width
         self.canvas_Y = self.window_height - self.canvas_height
         self.canvas = tkinter.Canvas(self.window, width=self.canvas_width, height=self.canvas_height)
         self.canvas.place(x=0, y=self.canvas_Y)
+        self.canvas_leftClicked = False
+
+        self.crossHairComponents = []
+        self.crossHairRadius = 0
+        self.edgeCoords = ()
+        self.centreCoords = ()
 
         self.imgSizeLbl = tkinter.Label(self.window, text="Image Size: ", bg="blue", fg="white")
         self.imgSizeLbl.place(x=0, y=0, width=400, height=self.infoLabel_height)
@@ -36,7 +44,6 @@ class App:
         self.canvas.bind_all("<space>", self.canvas_onspacepress)
 
     def drawCrosshair(self, color):
-
         def setCornerCoords(radius):
             x1 = self.centreCoords[0] - radius
             y1 = self.centreCoords[1] - radius
@@ -58,10 +65,16 @@ class App:
             radius = min(self.window_width - self.centreCoords[0], self.window_height - self.centreCoords[1])
             x1, y1, x2, y2 = setCornerCoords(radius)
 
-        self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)
+        self.crossHairRadius = radius
+
+        for component in self.crossHairComponents:
+            self.canvas.delete(component)
+
+        crossHairRect = self.canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=1)
+        self.crossHairComponents.append(crossHairRect)
 
     def canvas_onmotion(self, e):
-        if self.leftClicked == True:
+        if self.canvas_leftClicked:
             self.edgeCoords = (e.x, e.y)
             self.drawCrosshair("red")
 
@@ -69,13 +82,13 @@ class App:
         print("Edge co-ords: ", self.edgeCoords)
 
     def canvas_onleftclick(self, e):
-        self.leftClicked = True
+        self.canvas_leftClicked = True
         self.centreCoords = (e.x, e.y)
         print("Centre co-ords: ", self.centreCoords)
 
     def canvas_onleftrelease(self, e):
         self.drawCrosshair("green")
-        self.leftClicked = False
+        self.canvas_leftClicked = False
         print("Stop drawing")
 
     def canvas_onspacepress(self, e):
@@ -121,7 +134,6 @@ class App:
             self.currentImgLbl["text"] = str.format("Current Images: {0}/{1}",
                                                     self.currentImgIndex + 1, totalImgFiles)
 
-
             print("Success: ", filepath)
             self.imgProcessedCounter += 1
 
@@ -129,8 +141,6 @@ class App:
             print("Failure: ", filepath)
             self.currentImgIndex += 1
             self.processImage(self.currentImgIndex, self.imgPathList)
-
-
 
 
 inputPath = "/Users/lewisclark/Documents/KewGardensPics"
