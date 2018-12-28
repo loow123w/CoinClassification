@@ -3,7 +3,7 @@ import os
 from PIL import Image, ImageTk
 
 class App:
-    def __init__(self, window, window_width, window_height):
+    def __init__(self, window, window_width, window_height, imgPathList):
         self.window = window
         self.window_width = window_width
         self.window_height = window_height
@@ -12,8 +12,10 @@ class App:
 
         self.imgProcessedCounter = 0
         self.currentImgIndex = 0
-        self.imgPathList = []
+        self.imgPathList = imgPathList
         self.currentfilepath = ""
+        self.keepPhoto = False
+        self.pilImage = ""
 
         self.canvas_height = self.window_height - self.infoLabel_height
         self.canvas_width = self.window_width
@@ -24,6 +26,7 @@ class App:
 
         self.crossHairComponents = []
         self.crossHairRadius = 0
+        self.crossHairLineWidth = 2
         self.edgeCoords = ()
         self.centreCoords = ()
 
@@ -39,68 +42,97 @@ class App:
 
         self.canvas.bind("<Button-1>", self.canvas_onleftclick)
         self.canvas.bind("<ButtonRelease-1>", self.canvas_onleftrelease)
-        self.canvas.bind("<Button-2>", self.canvas_onrightclick)
         self.canvas.bind('<Motion>', self.canvas_onmotion)
         self.canvas.bind_all("<space>", self.canvas_onspacepress)
 
-    def drawCrosshair(self, color):
-        def setCornerCoords(radius):
-            x1 = self.centreCoords[0] - radius
-            y1 = self.centreCoords[1] - radius
-            x2 = self.centreCoords[0] + radius
-            y2 = self.centreCoords[1] + radius
-            return x1, y1, x2, y2
+        self.processImage(0, self.imgPathList)
 
+    def setCornerCoords(self, radius):
+        x1 = self.centreCoords[0] - radius
+        y1 = self.centreCoords[1] - radius
+        x2 = self.centreCoords[0] + radius
+        y2 = self.centreCoords[1] + radius
+        return x1, y1, x2, y2
+
+    def updateCrosshair(self, color):
         deltaX = abs(self.centreCoords[0] - self.edgeCoords[0])
         deltaY = abs(self.centreCoords[1] - self.edgeCoords[1])
         radius = max(deltaX, deltaY)
 
-        x1, y1, x2, y2 = setCornerCoords(radius)
+        x1, y1, x2, y2 = self.setCornerCoords(radius)
 
-        if x1 < 1 or y1 < 1:
-            radius = min(self.centreCoords[0], self.centreCoords[1])
-            x1, y1, x2, y2 = setCornerCoords(radius)
+        if x1 <= self.crossHairLineWidth or y1 <= self.crossHairLineWidth:
+            radius = min(self.centreCoords[0] - self.crossHairLineWidth,
+                         self.centreCoords[1] - self.crossHairLineWidth)
+            x1, y1, x2, y2 = self.setCornerCoords(radius)
 
-        if x2 >= self.window_width or y2 >= self.window_height:
+        if x2 >= self.window_width - self.crossHairLineWidth or y2 >= self.window_height - self.crossHairLineWidth:
             radius = min(self.window_width - self.centreCoords[0], self.window_height - self.centreCoords[1])
-            x1, y1, x2, y2 = setCornerCoords(radius)
+            x1, y1, x2, y2 = self.setCornerCoords(radius)
 
         self.crossHairRadius = radius
 
+        self.deleteCrossHair()
+        self.drawCrossHair(color, x1, y1, x2, y2)
+
+    def deleteCrossHair(self):
         for component in self.crossHairComponents:
             self.canvas.delete(component)
 
-        crossHairRect = self.canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=1)
+    def drawCrossHair(self, color, x1, y1, x2, y2):
+        crossHairRect = self.canvas.create_rectangle(x1, y1, x2, y2, outline=color, width=self.crossHairLineWidth)
+        crossHairXline = self.canvas.create_line((x1 + x2)/2 - self.crossHairRadius,
+                                                 (y1 + y2)/2,
+                                                 (x1 + x2)/2 + self.crossHairRadius,
+                                                 (y1 + y2) / 2,
+                                                 fill=color)
+        crossHairYline = self.canvas.create_line((x1 + x2) / 2,
+                                                 (y1 + y2) / 2 + self.crossHairRadius,
+                                                 (x1 + x2) / 2,
+                                                 (y1 + y2) / 2 - self.crossHairRadius,
+                                                 fill=color)
+
         self.crossHairComponents.append(crossHairRect)
+        self.crossHairComponents.append(crossHairXline)
+        self.crossHairComponents.append(crossHairYline)
 
     def canvas_onmotion(self, e):
         if self.canvas_leftClicked:
             self.edgeCoords = (e.x, e.y)
-            self.drawCrosshair("red")
-
-    def canvas_onrightclick(self, e):
-        print("Edge co-ords: ", self.edgeCoords)
+            self.updateCrosshair("red")
 
     def canvas_onleftclick(self, e):
         self.canvas_leftClicked = True
         self.centreCoords = (e.x, e.y)
+        self.edgeCoords = (e.x, e.y)
         print("Centre co-ords: ", self.centreCoords)
 
     def canvas_onleftrelease(self, e):
-        self.drawCrosshair("green")
+        self.keepPhoto = True
+        self.updateCrosshair("green")
         self.canvas_leftClicked = False
-        print("Stop drawing")
 
     def canvas_onspacepress(self, e):
-        os.remove(self.currentfilepath)
+        if not self.keepPhoto:
+            os.remove(self.currentfilepath)
+            print("delete")
+        elif self.keepPhoto:
+            print("crop and keep")
+            pilImage = self.pilImage.crop(self.setCornerCoords(self.crossHairRadius))
+            pilImage.save(self.currentfilepath)
+
         self.currentImgIndex += 1
         self.processImage(self.currentImgIndex, self.imgPathList)
-        print("space")
-
-    def setImgPathList(self, imgPathList):
-        self.imgPathList = imgPathList
 
     def processImage(self, imgIndex, imgPathList):
+        self.canvas_leftClicked = False
+        self.keepPhoto = False
+        self.deleteCrossHair()
+
+        if imgIndex >= len(self.imgPathList):
+            print("No more images to process in input folder.")
+            return
+
         self.currentfilepath = filepath = imgPathList[imgIndex]
 
         try:
@@ -123,6 +155,7 @@ class App:
             imgCentreX = width/2
             imgCentreY = height/2
 
+            self.pilImage = pilImage
             self.canvas.currentImage = image = ImageTk.PhotoImage(pilImage)
             imagesprite = self.canvas.create_image(imgCentreX, imgCentreY, image=image)
 
@@ -153,10 +186,7 @@ currentImgCounter = 0
 imgPathList = [os.path.join(inputPath, filename) for filename in os.listdir(inputPath)]
 
 window = tkinter.Tk()
-app = App(window, WINDOW_WIDTH, WINDOW_HEIGHT)
-app.setImgPathList(imgPathList)
-app.processImage(0, imgPathList)
-
+app = App(window, WINDOW_WIDTH, WINDOW_HEIGHT, imgPathList)
 
 window.mainloop()
 
