@@ -1,9 +1,34 @@
 import tkinter
+import time
+from tkinter import filedialog
 import os
 from PIL import Image, ImageTk
 
+
+class ClickTimer:
+    def __init__(self):
+        self.startTime = time.time()
+        self.finishTime = 0
+
+    def start(self):
+        self.startTime = time.time()
+        self.finishTime = 0
+
+    def finish(self):
+        self.finishTime = time.time()
+
+    def getElapsedTime(self):
+        if self.finishTime == 0:
+            timeElasped = time.time() - self.startTime
+        else:
+            timeElasped = self.finishTime - self.startTime
+
+        return timeElasped
+
+
 class App:
-    def __init__(self, window, window_width, window_height, imgPathList):
+    def __init__(self, window, window_width, window_height):
+        self.OUTPUTFOLDERNAME = "Cropped Images"
         self.window = window
         self.window_width = window_width
         self.window_height = window_height
@@ -12,10 +37,11 @@ class App:
 
         self.imgProcessedCounter = 0
         self.currentImgIndex = 0
-        self.imgPathList = imgPathList
-        self.currentfilepath = ""
+        self.inputFilePath = ""
+        self.outputFilePath = ""
         self.keepPhoto = False
         self.pilImage = ""
+        self.currentFileName = ""
 
         self.canvas_height = self.window_height - self.infoLabel_height
         self.canvas_width = self.window_width
@@ -23,6 +49,7 @@ class App:
         self.canvas = tkinter.Canvas(self.window, width=self.canvas_width, height=self.canvas_height)
         self.canvas.place(x=0, y=self.canvas_Y)
         self.canvas_leftClicked = False
+        self.clickTimer = ClickTimer()
 
         self.crossHairComponents = []
         self.crossHairRadius = 0
@@ -30,27 +57,50 @@ class App:
         self.edgeCoords = ()
         self.centreCoords = ()
 
-        self.imgSizeLbl = tkinter.Label(self.window, text="Image Size: ", bg="blue", fg="white")
+        self.imgSizeLbl = tkinter.Label(self.window, text="Image Size: ")
         self.imgSizeLbl.place(x=0, y=0, width=400, height=self.infoLabel_height)
 
-        self.processedImgLbl = tkinter.Label(self.window, text="Processed Images: ", bg="blue", fg="white")
+        self.processedImgLbl = tkinter.Label(self.window, text="Processed Images: ")
         self.processedImgLbl.place(x=400, y=0, width=200, height=self.infoLabel_height)
 
-        self.currentImgLbl = tkinter.Label(self.window, text=str.format("Current Images: {0}/{1}", self.currentImgIndex, totalImgFiles),
-                                           bg="blue", fg="white")
+        self.currentImgLbl = tkinter.Label(self.window, text=str.format("Current Images: {0}/{1}", self.currentImgIndex, 0))
         self.currentImgLbl.place(x=600, y=0, width=200, height=self.infoLabel_height)
+
+        self.inputFolderButton = tkinter.Button(self.window, text="Select input folder")
+        self.inputFolderButton.place(x=800, y = 0, width=200, height=self.infoLabel_height)
+        self.inputFolderButton.bind("<Button-1>", self.inputFolderButton_onclick)
 
         self.canvas.bind("<Button-1>", self.canvas_onleftclick)
         self.canvas.bind("<ButtonRelease-1>", self.canvas_onleftrelease)
         self.canvas.bind('<Motion>', self.canvas_onmotion)
         self.canvas.bind_all("<space>", self.canvas_onspacepress)
+        self.canvas.bind_all("<Left>", self.canvas_onspacepress)
+        self.canvas.bind_all("<Right>", self.canvas_onspacepress)
 
-        self.processImage(0, self.imgPathList)
+    
+
+    def inputFolderButton_onclick(self, e):
+        folderPath = filedialog.askdirectory(initialdir="/")
+        if folderPath:
+            self.inputFolderPath = folderPath
+            self.outputFolderPath = os.path.join(self.inputFolderPath, self.OUTPUTFOLDERNAME)
+            print(self.outputFolderPath)
+
+            if not os.path.isdir(self.outputFolderPath):
+                print("WARNING: Output folder generated.")
+                os.mkdir(self.outputFolderPath)
+
+            self.imgNameList = os.listdir(self.inputFolderPath)
+            self.currentImgIndex = 0
+            self.currentImgLbl.config(text=str.format("Current Images: {0}/{1}", self.currentImgIndex, len(self.imgNameList)))
+            self.processImage(0)
+
 
     def setCornerCoords(self, radius):
         x1 = self.centreCoords[0] - radius
         y1 = self.centreCoords[1] - radius
         x2 = self.centreCoords[0] + radius
+
         y2 = self.centreCoords[1] + radius
         return x1, y1, x2, y2
 
@@ -102,41 +152,48 @@ class App:
             self.updateCrosshair("red")
 
     def canvas_onleftclick(self, e):
+        self.clickTimer.start()
+        self.deleteCrossHair()
+        self.keepPhoto = False
         self.canvas_leftClicked = True
         self.centreCoords = (e.x, e.y)
         self.edgeCoords = (e.x, e.y)
         print("Centre co-ords: ", self.centreCoords)
 
     def canvas_onleftrelease(self, e):
-        self.keepPhoto = True
-        self.updateCrosshair("green")
+        clickTimeElaspsed = self.clickTimer.getElapsedTime()
+        if clickTimeElaspsed < 0.2:
+            self.deleteCrossHair()
+            self.keepPhoto = False
+        else:
+            self.keepPhoto = True
+            self.updateCrosshair("green")
+
         self.canvas_leftClicked = False
 
     def canvas_onspacepress(self, e):
-        if not self.keepPhoto:
-            os.remove(self.currentfilepath)
-            print("delete")
-        elif self.keepPhoto:
+        if self.keepPhoto:
             print("crop and keep")
             pilImage = self.pilImage.crop(self.setCornerCoords(self.crossHairRadius))
-            pilImage.save(self.currentfilepath)
+            pilImage.save(os.path.join(self.outputFolderPath, self.currentFileName))
 
+        os.remove(os.path.join(self.inputFolderPath, self.currentFileName))
         self.currentImgIndex += 1
-        self.processImage(self.currentImgIndex, self.imgPathList)
+        self.processImage(self.currentImgIndex)
 
-    def processImage(self, imgIndex, imgPathList):
+    def processImage(self, imgIndex):
         self.canvas_leftClicked = False
         self.keepPhoto = False
         self.deleteCrossHair()
 
-        if imgIndex >= len(self.imgPathList):
+        if imgIndex >= len(self.imgNameList):
             print("No more images to process in input folder.")
             return
 
-        self.currentfilepath = filepath = imgPathList[imgIndex]
+        self.currentFileName = self.imgNameList[imgIndex]
 
         try:
-            pilImage = Image.open(filepath)
+            pilImage = Image.open(os.path.join(self.inputFolderPath, self.currentFileName))
             width, height = pilImage.size
             originalWidth, originalHeight = width, height
             aspectRatio = width / height
@@ -165,28 +222,22 @@ class App:
                                                  width, originalWidth, height, originalHeight)
 
             self.currentImgLbl["text"] = str.format("Current Images: {0}/{1}",
-                                                    self.currentImgIndex + 1, totalImgFiles)
+                                                    self.currentImgIndex + 1, len(self.imgNameList))
 
-            print("Success: ", filepath)
+            print("Success: ", self.currentFileName)
             self.imgProcessedCounter += 1
 
         except:
-            print("Failure: ", filepath)
+            print("Failure: ", self.currentFileName)
             self.currentImgIndex += 1
-            self.processImage(self.currentImgIndex, self.imgPathList)
+            self.processImage(self.currentImgIndex)
 
-
-inputPath = "/Users/lewisclark/Documents/KewGardensPics"
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 700
 
-totalImgFiles = len(os.listdir(inputPath))
-currentImgCounter = 0
-imgPathList = [os.path.join(inputPath, filename) for filename in os.listdir(inputPath)]
-
 window = tkinter.Tk()
-app = App(window, WINDOW_WIDTH, WINDOW_HEIGHT, imgPathList)
+app = App(window, WINDOW_WIDTH, WINDOW_HEIGHT)
 
 window.mainloop()
 

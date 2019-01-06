@@ -28,7 +28,7 @@ if not os.path.exists(outputPath):
 
 counter = 0
 successfulCounter = 0
-iterations = 5
+iterations = 10
 
 print("Total pics to get: ", iterations * 400)
 

@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43a0d577-66ee-4d12-8c98-58a4a6650f02" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GoogleImageScraper.py" beforeDir="false" afterPath="$PROJECT_DIR$/GoogleImageScraper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ImageCropper.py" beforeDir="false" afterPath="$PROJECT_DIR$/ImageCropper.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -15,8 +17,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/GoogleImageScraper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="146">
-              <caret line="22" column="20" lean-forward="true" selection-start-line="22" selection-start-column="20" selection-end-line="22" selection-end-column="20" />
+            <state relative-caret-position="-90">
+              <caret line="25" column="34" selection-start-line="25" selection-start-column="34" selection-end-line="25" selection-end-column="34" />
               <folding>
                 <element signature="e#112#142#0" expanded="true" />
               </folding>
@@ -27,8 +29,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ImageCropper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="806">
-              <caret line="156" lean-forward="true" selection-start-line="156" selection-end-line="156" />
+            <state relative-caret-position="314">
+              <caret line="79" column="4" selection-start-line="79" selection-start-column="4" selection-end-line="79" selection-end-column="4" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -44,6 +46,14 @@
         <option value="Python Script" />
       </list>
     </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>inputFolder</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>inputFolderPath</replace>
+    </replaceStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -105,7 +115,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.GoogleImageScraper">
+  <component name="RunManager" selected="Python.ImageCropper">
     <configuration name="GoogleImageScraper" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="CoinClassification" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -152,13 +162,6 @@
       <item itemvalue="Python.GoogleImageScraper" />
       <item itemvalue="Python.ImageCropper" />
     </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.GoogleImagesScraper" />
-        <item itemvalue="Python.GoogleImagesScraper" />
-        <item itemvalue="Python.GoogleImagesScraper" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -248,8 +251,8 @@
     <entry file="file://$PROJECT_DIR$/GoogleImagesScraper.py" />
     <entry file="file://$PROJECT_DIR$/GoogleImageScraper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="146">
-          <caret line="22" column="20" lean-forward="true" selection-start-line="22" selection-start-column="20" selection-end-line="22" selection-end-column="20" />
+        <state relative-caret-position="-90">
+          <caret line="25" column="34" selection-start-line="25" selection-start-column="34" selection-end-line="25" selection-end-column="34" />
           <folding>
             <element signature="e#112#142#0" expanded="true" />
           </folding>
@@ -258,8 +261,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ImageCropper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="806">
-          <caret line="156" lean-forward="true" selection-start-line="156" selection-end-line="156" />
+        <state relative-caret-position="314">
+          <caret line="79" column="4" selection-start-line="79" selection-start-column="4" selection-end-line="79" selection-end-column="4" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
